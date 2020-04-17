@@ -4,36 +4,33 @@ module testbench(
     input wire clk
 );
 
-// 8 ten bit regs
-// reg [9:0] arr [9:0];
 
-// wire q, r;
-// Foo f(q, r);
-// assign q = 1;
-
-// integer i;
-// integer j;
 
 reg [128:0] block_n = 1;
-wire set_enable;
-assign set_enable = 1;
+// wire set_enable;
+
+reg [5:0] block_offset = 0;
 
 
-Set s(clk, set_enable, block_n);
+reg [1:0] enable_reg = 1;
+// assign set_enable = 1;
 
-assign set_enable = 0;
+
+// take the input data
+reg [63:0] write_data = 8;   
+
+// specify the write (read) size
+reg [1:0] data_size = 3; // 0: 8, 1: 16, 2: 32, 3: 64.
+
+Set s(clk, enable_reg, block_n, block_offset, write_data, data_size);
+
+
 
 initial begin
-//     arr[0] = 1 + 2;
-//     arr[3] = 5 + 1;
-
-//     for (i = 0; i < 10; i = i + 1) begin
-//         for (j = 0; j < 10; j = j + 1) begin
-//             $write("%d", arr[i][j]);
-//         end
-//         $display("");
-//     end
     $display("Testbench!");
+    
+
+
 end
 
 endmodule
