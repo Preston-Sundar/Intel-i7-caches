@@ -47,14 +47,12 @@ reg [511:0] membank [3:0];
             end_idx =  (512 - (block_offset * 8));
 
             for (bit_n = 0; bit_n < 512; bit_n = bit_n + 1) begin
-
                 // if the bits are to be set to 0
                 if (bit_n >= start_idx && bit_n < end_idx) begin
                     bit_mask[bit_n] = 0;
                 end
             end
             
-    
             // set the data
             membank[block_num] = membank[block_num] & bit_mask;
             membank[block_num] = membank[block_num] | (write_data << start_idx);
