@@ -3,6 +3,8 @@ module Set(
 
     input reg [1:0] enable,
 
+    input reg [511:0] membank,
+
     input reg [2:0] write_enable,
 
     // for now, specify which block to make one for now
@@ -17,16 +19,20 @@ module Set(
 
     // specify the write (read) size
     input reg [1:0] data_size, // 0: 8, 1: 16, 2: 32, 3: 64.
-
     input reg [23:0] tag,
-
+    
+    
     input reg [31:0] n_ops,
 
 
-    output reg [128:0] out_data,  
 
-    output reg [1:0] miss,
+    output reg [127:0] out_data,  
 
+    // 
+    output reg [1:0] write_miss,
+    output reg [1:0] read_miss,
+
+    // flag if read data is ready
     output reg [1:0] data_ready 
 
 );
@@ -50,7 +56,7 @@ integer block_num = -1;
 reg [511:0] bit_mask;
 
 // 4 blocks, each block is 64 bytes big.
-reg [511:0] membank [3:0];
+// reg [511:0] membank [3:0];
 
 reg [23:0] tag_bits [3:0];
 
@@ -58,6 +64,11 @@ reg [23:0] tag_bits [3:0];
 
 reg [1:0] valid_bits [3:0];
 reg [1:0] dirty_bits [3:0];
+
+
+
+reg [7:0] test_b = 8;
+integer c = 0;
 
 
 
@@ -79,6 +90,11 @@ reg [1:0] dirty_bits [3:0];
             end_idx = (512 - (block_offset * 8));
 
 
+            $display("test_b: %d", test_b);
+            for (c = 0; c < 8; c = c + 1) begin
+                $write("%d", test_b[c]);
+            end
+
             $display("");
 
             // calculate the block num
@@ -92,8 +108,16 @@ reg [1:0] dirty_bits [3:0];
 
 
             if (block_num == -1) begin
-                miss = 1;
-                $display("Miss!");
+
+
+                if (write_enable == 1) begin
+                    $display("Write Miss!");    
+                    write_miss = 1;
+                end else begin
+                    $display("Read Miss!");
+                    read_miss = 1;
+                end
+
             end else begin
                
                 
@@ -108,6 +132,9 @@ reg [1:0] dirty_bits [3:0];
                             bit_mask[bit_n] = 0;
                         end
                     end
+
+                    $display("start idx %d", start_idx);
+                    $display("end idx %d", end_idx);
 
                     membank[block_num] = membank[block_num] & bit_mask;
                     membank[block_num] = membank[block_num] | (write_data << start_idx);
@@ -143,20 +170,13 @@ reg [1:0] dirty_bits [3:0];
 
 
 
-
-
-
-
-
-
-
             // reset mask
             bit_mask = 0;
             block_num = -1;
 
 
             for (i = 0; i < 4; i = i + 1) begin
-                for (j = 0; j < 512; j = j + 1) begin
+                for (j = 511; j >= 0; j = j - 1) begin
                     $write("%d", membank[i][j]);
                 end
                 $display("");
