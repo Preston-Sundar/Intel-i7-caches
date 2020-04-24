@@ -40,7 +40,7 @@ module Set(
 
 integer i;
 integer j;
-integer d;
+integer copy_idx;
 
 
 integer bit_n;
@@ -62,7 +62,10 @@ reg [511:0] bit_mask;
 // 64 sets x [64 byte block x 8 blocks]
 reg [511:0] bigbank [511:0];
 
+// our tag bits for all blocks
 reg [23:0] tag_bits [511:0];
+
+// gotta do this
 reg [1:0] valid_bits [511:0];
 
 reg [511:0] membank [7:0];
@@ -95,8 +98,8 @@ integer c = 0;
             // membank[0] = bigbank[set_idx * 8];
             // membank[1] = bigbank[(set_idx * 8) + 1];
 
-            for (d = 0; d < 8; d = d + 1) begin
-                membank[d] = bigbank[(set_idx * 8) + d];
+            for (copy_idx = 0; copy_idx < 8; copy_idx = copy_idx + 1) begin
+                membank[copy_idx] = bigbank[(set_idx * 8) + copy_idx];
             end        
 
 
@@ -196,7 +199,13 @@ integer c = 0;
             bit_mask = 0;
             block_num = -1;
 
+            // write the membank back into the bigbank
+            for (copy_idx = 0; copy_idx < 8; copy_idx = copy_idx + 1) begin
+                bigbank[(set_idx * 8) + copy_idx] = membank[copy_idx];
+            end  
 
+
+            // debug print
             for (i = 0; i < 8; i = i + 1) begin
                 for (j = 511; j >= 0; j = j - 1) begin
                     $write("%d", membank[i][j]);
