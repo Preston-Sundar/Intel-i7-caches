@@ -25,6 +25,7 @@ module L1_D(
     input reg [63:0] write_data_in,
 
     // the address to read/write to       <-- IDK
+    // 24 tag, 6 for set index, 6 block offset
     input reg [63:0] address_in, 
 
     // specify the data write/read size
@@ -74,7 +75,15 @@ module L1_D(
 
 
     // store the input address temp
-    reg [63:0] address = address_in;
+    // declare registers to store the
+    // calculated tag, block index
+    reg [63:0] address_cpy = 0;
+    // physical tag
+    reg [24:0] tag = 0;
+    reg [6:0] block_offset = 0;
+    
+    // make copy of address (safety)
+    address_cpy = address_in;
 
     
     // determine the set index

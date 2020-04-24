@@ -13,7 +13,7 @@ reg [1:0] enable_reg = 1;
 
 
 // take the input data
-reg [63:0] write_data = 8;   
+reg [63:0] write_data = 123;   
 
 // specify the write (read) size
 reg [1:0] data_size = 3; // 0: 8, 1: 16, 2: 32, 3: 64.
@@ -72,17 +72,17 @@ always @(negedge clk) begin
     end
 
 
-    // if (num_ops == 3) begin
-    //     write_en = 0;
-    //     tag = 15;
-    //     block_offset = 0;
-    //     data_size = 3;
-    // end
+    if (num_ops == 3) begin
+        write_en = 0;
+        tag = 20;
+        block_offset = 0;
+        data_size = 3;
+    end
 
-    // if (num_ops == 4) begin // only does the reading No Op
-    //     write_en = 2;
-    //     $display("DATA: %d", out_data);
-    // end
+    if (num_ops == 4) begin // only does the reading No Op
+        write_en = 2;
+        $display("DATA: %d", out_data);
+    end
 
 
     // if (num_ops == 5) begin     // force read miss
@@ -112,7 +112,7 @@ always @(negedge clk) begin
 
 
 
-    if (num_ops >= 2) begin
+    if (num_ops >= 4) begin
         enable_reg = 0;
     end
 end

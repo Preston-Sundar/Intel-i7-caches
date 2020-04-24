@@ -172,14 +172,15 @@ integer c = 0;
 
                     $display("\nstart: %d", start_idx);
                     $display("end: %d", end_idx);
-                    // set the data
-                    for (bit_x = start_idx; bit_x <= end_idx; bit_x = bit_x + 1) begin
+
+                    // set the out data
+                    for (bit_x = 0; bit_x <= 512; bit_x = bit_x + 1) begin
                         
-                        out_data[out_i] = membank[block_num][bit_x];
-                        $write("%d", membank[block_num][bit_x]);
-
-                        out_i = out_i + 1;
-
+                        if (bit_x >= start_idx && bit_x < end_idx) begin
+                            out_data[out_i] = membank[block_num][bit_x];
+                            // $write("poop %d\n", membank[block_num][bit_x]);
+                            out_i = out_i + 1;
+                        end
                     end
 
 
