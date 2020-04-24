@@ -6,6 +6,9 @@
  * operation and the cache module manages forwarding and eviction (we think).
  */
 
+`include "set.v"
+
+
 module L1_D(
     input wire clk,
 
@@ -73,26 +76,74 @@ module L1_D(
     // all the dirty and valid bits
     reg [1:0] valid_bits [511:0];
 
-
     // store the input address temp
     // declare registers to store the
     // calculated tag, block index
-    reg [63:0] address_cpy = 0;
+    reg [63:0] address_cpy;
+    
     // physical tag
-    reg [24:0] tag = 0;
-    reg [6:0] block_offset = 0;
-    
-    // make copy of address (safety)
-    address_cpy = address_in;
+    reg [23:0] tag; // = address_cpy;                     // <-- IDk
+    reg [5:0] block_offset = 0;
+    reg [5:0] set_idx = 0;
+
+
+
+    // define the registers used to control the set
+
+
+
+    // output miss flags
+    reg [1:0] set_miss_r;
+    reg [1:0] set_miss_w;
+
+    // if the read requested data is ready
+    reg [1:0] data_ready;
+
+    // data from the set
+    reg [127:0] out_data;
+
+    // used to enable the set
+    reg [1:0] set_enable;
+
+    // the operand number
+    reg [31:0] n_ops;
+
+
+    // the control stuff
+    always @(posedge clk) begin
+
+        if (ENABLE) begin
+            
+            // make copy of address for fun.
+            address_cpy = address_in;
+
+            // get the block offset from address.
+            block_offset = address_in;
+
+            // get the set index
+            set_idx = (address_cpy >> 6);
+
+            // get the tag
+            tag = address_cpy >> 12;
+            $display("add cpy: %b", address_cpy);
+            $display("B offset: %b", block_offset);
+            $display("S idx: %b", set_idx);
+            $display("tag: %b", tag);
+
+            // determine action??            
+
+        end
+
+    end
 
     
-    // determine the set index
-
-
-    // Set s(clk, enable_reg, write_en, block_offset, write_data, 
-    // data_size, tag, num_ops, out_data, miss_w, miss_r, data_ready);
+    Set s(clk, set_enable, write_enable_in, block_offset, write_data_in, 
+    write_size_in, tag, n_ops, out_data, set_miss_w, set_miss_r, data_ready);
 
     // send stuff to that set
 
 
 endmodule
+
+
+// L1_D L1(clock.val);
