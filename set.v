@@ -2,9 +2,6 @@ module Set(
     input wire clk,
 
     input reg [1:0] enable,
-
-    input reg [511:0] membank,
-
     input reg [2:0] write_enable,
 
     // for now, specify which block to make one for now
@@ -13,6 +10,9 @@ module Set(
 
     // input reg for block offset
     input reg [5:0] block_offset,
+
+    // the set to read/write
+    input reg [5:0] set_idx,
 
     // take the input data
     input reg [63:0] write_data,    
@@ -40,6 +40,8 @@ module Set(
 
 integer i;
 integer j;
+integer d;
+
 
 integer bit_n;
 integer bit_x;
@@ -55,19 +57,18 @@ integer block_num = -1;
 
 reg [511:0] bit_mask;
 
-// 4 blocks, each block is 64 bytes big.
-// reg [511:0] membank [3:0];
 
-reg [23:0] tag_bits [3:0];
+// each set is 8-way associative
+// 64 sets x [64 byte block x 8 blocks]
+reg [511:0] bigbank [511:0];
 
+reg [23:0] tag_bits [511:0];
+reg [1:0] valid_bits [511:0];
 
+reg [511:0] membank [7:0];
 
-reg [1:0] valid_bits [3:0];
-reg [1:0] dirty_bits [3:0];
+// reg [7:0] test_b = 8;
 
-
-
-reg [7:0] test_b = 8;
 integer c = 0;
 
 
@@ -81,6 +82,27 @@ integer c = 0;
         tag_bits[3] = 18;
 
         if (enable) begin
+
+
+            // calculate the part of membank to use given set index
+
+            // bigbank[set_idx * 8] = 8;
+            // bigbank[(set_idx * 8) + 1] = 3;
+            // bigbank[(set_idx * 8) + 2] = 3;
+            // bigbank[(set_idx * 8) + 3] = 3;
+
+
+            // membank[0] = bigbank[set_idx * 8];
+            // membank[1] = bigbank[(set_idx * 8) + 1];
+
+            for (d = 0; d < 8; d = d + 1) begin
+                membank[d] = bigbank[(set_idx * 8) + d];
+            end        
+
+
+
+
+
             // $display("membank (operation num %d, WRITE: %d) :", n_ops, write_enable);
 
             // construct bit mask
@@ -90,18 +112,18 @@ integer c = 0;
             end_idx = (512 - (block_offset * 8));
 
 
-            $display("test_b: %d", test_b);
-            for (c = 0; c < 8; c = c + 1) begin
-                $write("%d", test_b[c]);
-            end
+            // $display("test_b: %d", test_b);
+            // for (c = 0; c < 8; c = c + 1) begin
+            //     $write("%d", test_b[c]);
+            // end
 
             $display("");
 
             // calculate the block num
-            for (block_i = 0; block_i < 4; block_i = block_i + 1) begin
+            for (block_i = 0; block_i < 8; block_i = block_i + 1) begin
                 // if the bits are to be set to 0
-                $display("%d == %d", tag, tag_bits[block_i]);
-                if (tag == tag_bits[block_i]) begin
+                $display("%d == %d", tag, tag_bits[(set_idx * 8) + block_i]);
+                if (tag == tag_bits[(set_idx * 8) + block_i]) begin
                     block_num = block_i;
                 end
             end
@@ -175,7 +197,7 @@ integer c = 0;
             block_num = -1;
 
 
-            for (i = 0; i < 4; i = i + 1) begin
+            for (i = 0; i < 8; i = i + 1) begin
                 for (j = 511; j >= 0; j = j - 1) begin
                     $write("%d", membank[i][j]);
                 end

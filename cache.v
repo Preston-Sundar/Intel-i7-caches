@@ -1,3 +1,11 @@
+/**
+ * cache.v
+ * The main implementation for our cache. We use a large memory bank that has all
+ * the memory of the cache. Once we know which set needs to perform the reads and writes,
+ * we pass a subset of our memory bank to the set module. The set then performs the specified
+ * operation and the cache module manages forwarding and eviction (we think).
+ */
+
 module L1_D(
     input wire clk,
 
@@ -54,14 +62,15 @@ module L1_D(
 );
 
     // the BIG bank
-    reg [511:0] bigbank [255:0];
+    // each set is 8-way associative
+    // 64 sets x [64 byte block x 8 blocks]
+    reg [511:0] bigbank [511:0];
 
     // all the tag bits
-    reg [23:0] tag_bits [255:0];
+    reg [23:0] tag_bits [511:0];
 
     // all the dirty and valid bits
-    reg [1:0] valid_bits [255:0];
-    reg [1:0] dirty_bits [255:0];
+    reg [1:0] valid_bits [511:0];
 
 
     // store the input address temp
@@ -71,7 +80,8 @@ module L1_D(
     // determine the set index
 
 
-    // Set s(clk, enable_reg, write_en, block_offset, write_data, data_size, tag, num_ops, out_data, miss_w, miss_r, data_ready);
+    // Set s(clk, enable_reg, write_en, block_offset, write_data, 
+    // data_size, tag, num_ops, out_data, miss_w, miss_r, data_ready);
 
     // send stuff to that set
 
