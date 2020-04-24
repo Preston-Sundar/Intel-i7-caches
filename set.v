@@ -2,7 +2,7 @@ module Set(
     input wire clk,
 
     input reg [1:0] enable,
-    input reg [2:0] write_enable,
+    input reg [1:0] write_enable,
 
     // for now, specify which block to make one for now
     // input reg [3:0] block_num,       // 4 blocks per set
@@ -33,7 +33,10 @@ module Set(
     output reg [1:0] read_miss,
 
     // flag if read data is ready
-    output reg [1:0] data_ready 
+    output reg [1:0] data_ready,
+
+    // if set to 1, then force evict to write block
+    input reg [1:0] force_write
 
 );
 
@@ -59,7 +62,7 @@ reg [511:0] bit_mask;
 
 
 // each set is 8-way associative
-// 64 sets x [64 byte block x 8 blocks]
+// 64 x 8 bits sets x [64 byte block x 8 blocks]
 reg [511:0] bigbank [511:0];
 
 // our tag bits for all blocks
@@ -85,6 +88,8 @@ integer c = 0;
         tag_bits[3] = 18;
 
         if (enable) begin
+
+            $display("SET OPERATION %d", n_ops);
 
 
             // calculate the part of membank to use given set index
@@ -120,12 +125,12 @@ integer c = 0;
             //     $write("%d", test_b[c]);
             // end
 
-            $display("");
+            $display("Tag matching:");
 
             // calculate the block num
             for (block_i = 0; block_i < 8; block_i = block_i + 1) begin
                 // if the bits are to be set to 0
-                $display("%d == %d", tag, tag_bits[(set_idx * 8) + block_i]);
+                $display("  %d == %d", tag, tag_bits[(set_idx * 8) + block_i]);
                 if (tag == tag_bits[(set_idx * 8) + block_i]) begin
                     block_num = block_i;
                 end
@@ -147,7 +152,7 @@ integer c = 0;
                
                 
                 if (write_enable == 1) begin
-                    $display("membank (operation num %d, WRITE) :", n_ops);
+                    $display("WRITE for operation %d", n_ops);
 
                 
                     // set the data
@@ -158,20 +163,20 @@ integer c = 0;
                         end
                     end
 
-                    $display("start idx %d", start_idx);
-                    $display("end idx %d", end_idx);
+                    // $display("start idx %d", start_idx);
+                    // $display("end idx %d", end_idx);
 
                     membank[block_num] = membank[block_num] & bit_mask;
                     membank[block_num] = membank[block_num] | (write_data << start_idx);
                 end else if (write_enable == 0) begin
 
-                    $display("membank (operation num %d, READ) :", n_ops);
+                    $display("READ for operation %d", n_ops);
 
                     out_data = 0;
                     out_i = 0;
 
-                    $display("\nstart: %d", start_idx);
-                    $display("end: %d", end_idx);
+                    // $display("\nstart: %d", start_idx);
+                    // $display("end: %d", end_idx);
 
                     // set the out data
                     for (bit_x = 0; bit_x <= 512; bit_x = bit_x + 1) begin
@@ -183,13 +188,16 @@ integer c = 0;
                         end
                     end
 
-
-
+                    // set dat_ready to high, data can be read at neg edge
                     data_ready = 1;                    
-                end else if (write_enable == 2) begin
-                    $display("NO OP on Set");
-                end
 
+                // otherwise its a force write
+                end else if (force_write == 1) begin
+                
+                    
+
+
+                end
 
 
             end

@@ -21,7 +21,8 @@ module cachebench(
 
     // the address to read/write to       <-- IDK
     // 24 tag, 6 for set index, 6 block offset
-    reg [63:0] address_in;
+    // setup an initial operation
+    reg [63:0] address_in = 19999;
 
     // specify the data write/read size
     reg [2:0] write_size_in;
@@ -52,16 +53,34 @@ module cachebench(
     // forward CLF
     reg [1:0] CLF_out;
 
+    // for debugging
+    reg [31:0] nops = 0; 
+    reg [31:0] max_ops = 2; 
 
-L1_D l(clk, CPU_ENABLE, ENABLE, write_enable_in, write_data_in, 19999, write_size_in, data_in, CLF,
-    data_out, write_enable_out, write_data_out, address_out, write_size_out, CLF_out);
+
+
+
+L1_D l(clk, CPU_ENABLE, ENABLE, write_enable_in, write_data_in, address_in, write_size_in, data_in, CLF,
+    data_out, write_enable_out, write_data_out, address_out, write_size_out, CLF_out, nops);
 
 initial begin
     $display("Cache Bench!");
 end
 
+
+
 always @(negedge clk) begin
-    ENABLE = 1;
+    
+
+    nops = nops + 1;
+
+    address_in = 8;
+
+
+    if (nops == max_ops) begin
+        ENABLE = 0;
+    end    
+
 end
 
 

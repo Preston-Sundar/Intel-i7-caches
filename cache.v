@@ -60,15 +60,15 @@ module L1_D(
     output reg [2:0] write_size_out,
 
     // forward CLF
-    output reg [1:0] CLF_out
+    output reg [1:0] CLF_out,
+
+
+    // for debugging, the current op number
+    input reg [31:0] nops 
 
 
 );
 
-    // the BIG bank
-    // each set is 8-way associative
-    // 64 sets x [64 byte block x 8 blocks]
-    reg [511:0] bigbank [511:0];
 
     // all the tag bits
     reg [23:0] tag_bits [511:0];
@@ -103,18 +103,22 @@ module L1_D(
     reg [127:0] out_data;
 
     // used to enable the set
-    reg [1:0] set_enable;
+    reg [1:0] set_enable = 0;
 
-    // the operand number
-    reg [31:0] n_ops;
+    // if set to 1, then force evict to write block
+    reg [1:0] force_write = 0;
 
 
     // the control stuff
     always @(posedge clk) begin
 
+        set_enable = 0;
+
         if (ENABLE) begin
             
-            // make copy of address for fun.
+           
+
+            // make copy of address for safety.
             address_cpy = address_in;
 
             // get the block offset from address.
@@ -125,20 +129,53 @@ module L1_D(
 
             // get the tag
             tag = address_cpy >> 12;
-            $display("add cpy: %b", address_cpy);
-            $display("B offset: %b", block_offset);
-            $display("S idx: %b", set_idx);
-            $display("tag: %b", tag);
+           
 
-            // determine action??            
+            // if there is no data from the lower cache
+            if (data_in == 0) begin
 
+                $display("\nCACHE OPERATION (CPU) %d", nops);
+                $display("  add cpy: %b", address_cpy);
+                $display("  B offset: %b", block_offset);
+                $display("  S idx: %b", set_idx);
+                $display("  tag: %b", tag);
+
+
+                // pass instruction to the set module
+                // set set enable
+                set_enable = 1;
+
+
+
+
+            // if there is data from lower
+            end else if (data_in != 0) begin
+
+                $display("\nCACHE OPERATION (Lower Cache) %d", nops);
+                $display("  add cpy: %b", address_cpy);
+                $display("  B offset: %b", block_offset);
+                $display("  S idx: %b", set_idx);
+                $display("  tag: %b", tag);
+
+            end
+            // determine action??
+
+
+
+
+         
+
+
+        
         end
+
+
 
     end
 
     
-    Set s(clk, set_enable, write_enable_in, block_offset, write_data_in, 
-    write_size_in, tag, n_ops, out_data, set_miss_w, set_miss_r, data_ready);
+    Set s(clk, set_enable, write_enable_in, block_offset, set_idx, write_data_in, 
+    write_size_in, tag, nops, out_data, set_miss_w, set_miss_r, data_ready, force_write);
 
     // send stuff to that set
 
