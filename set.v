@@ -75,6 +75,7 @@ reg [511:0] bigbank [511:0];
 reg [23:0] tag_bits [511:0];
 
 
+reg [1:0] READ_IN;
 
 // gotta do this
 reg [1:0] valid_bits [511:0];

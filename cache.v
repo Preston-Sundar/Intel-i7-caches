@@ -9,7 +9,7 @@
 `include "set.v"
 
 
-module L1_D(
+module L1(
     input wire clk,
 
     // Once done with work, set this line to high so that
@@ -20,6 +20,9 @@ module L1_D(
     // and need to forward instruction to next cache.
     // lower component will set to high when its done.
     input reg [1:0] ENABLE,
+
+
+    input reg [1:0] READ_IN,
 
     // the write enable line
     input reg [1:0] write_enable_in,
@@ -117,7 +120,7 @@ module L1_D(
 
         set_enable = 0;
 
-        if (ENABLE) begin
+        if (READ_IN) begin
             
            
 
@@ -169,10 +172,20 @@ module L1_D(
                 // clear the other set registers
 
             end
+
+            force_write = 0;
             
+            
+        end
+
+        else if (ENABLE) begin
+
+            // set data out to data in 
+            data_out = data_in;
 
 
-            
+            // then set CPU_ENABLE to high
+            CPU_ENABLE = 1;
         end
 
 
@@ -187,22 +200,27 @@ module L1_D(
         // read its status and determine next cache operation.
 
         // if the set has data after a read op
-        if (data_ready && ENABLE) begin
+        if (data_ready && READ_IN) begin
 
             $display("CACHE READ DATA FOR OPERATION %d", nops);
             $display("  data: %d", out_data);
 
             
-
+            // now that we have the data from set
+            // write to the data out
+            data_out = out_data;
 
             data_ready = 0;
             out_data = 0;
 
+            // set cpu enable, we have the requested read data
+            CPU_ENABLE = 1;
+
         end
 
 
-        // write miss on our databank
-        else if (set_miss_w && ENABLE) begin
+        // read or write miss on our databank
+        else if ((set_miss_r || set_miss_w) && READ_IN) begin
 
             $display("CACHE OPERATION %d, WRITE MISS", nops);
 
@@ -212,7 +230,7 @@ module L1_D(
             write_enable_out = write_enable_in;
             write_size_out = write_size_in;
 
-            ENABLE = 0;
+            READ_IN = 0;
 
         end
 
@@ -227,6 +245,3 @@ module L1_D(
 
 
 endmodule
-
-
-// L1_D L1(clock.val);
