@@ -37,3 +37,32 @@ L1 Caches
 ```
 
 
+## Parameters
+
+Here is our L1 cache declaration which was declared between L2 and the CPU itself.
+
+```verilog
+L1 l1_data(clk, CPU_ENABLE, ENABLE, READ_IN, write_enable_in, write_data_in, address_in, write_size_in, data_in, CLF,data_out, write_enable_out, 
+write_data_out, address_out, write_size_out, CLF_out, nops);
+```
+
+
+- **clk**: clock from the top-level module used to sychronize with all the other components.
+- **CPU_ENABLE**: Used to indicate back to the CPU that its requested data/instruction is ready.
+- **ENABLE**: When the enable line is set, a cache at a lower level is ready to forward data to L1.
+- **READ_IN**: When the read_in line is set, our cache can perform its actions.
+- **write_enable_in**: determines if the instruction is a read or write.
+- **write_data_in**: The data we will be writing to the cache.
+- **address_in**: specifies the address to read/write to. Its broken up into the tag, set index, and block offset as shown later on.
+- **write_size_in**: specifies the size of the cache memory operand (8bits, 16bits, 32bits, 64bits).
+- **data_in**: The data forwarded to L1 from the next level cache L2.
+- **CLF**: Cache Line Flush is used to empty out a cache line, made debugging easier.
+- **data_out**: the data we send to the CPU once its ready.
+- **write_enable_out**: the forwarded write enable we send to the next level cache.
+- **write_data_out**: the forwarded data we send to the next level cache.
+- **address_out**: the forwarded address we send to the next level cache.
+- **CLF_out**: the forwarded Cache Line Flush we send to the next level cache.
+- **nops**: Used for debugging, it specified the current operation number.
+
+
+
