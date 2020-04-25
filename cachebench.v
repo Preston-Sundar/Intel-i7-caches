@@ -6,8 +6,8 @@ module cachebench(
 
     // Once done with work, set this line to high so that
     // higher-level component can resume whatever.
-    reg [1:0] CPU_ENABLE;
-    
+    reg [1:0] CPU_ENABLE;// low: it can operate, above is disabled
+                         
     // set to low if there was a local miss
     // and need to forward instruction to next cache.
     // lower component will set to high when its done.
@@ -54,7 +54,7 @@ module cachebench(
 
     // for debugging
     reg [31:0] nops = 0; 
-    reg [31:0] max_ops = 6; 
+    reg [31:0] max_ops = 5; 
 
 
 
@@ -66,60 +66,92 @@ initial begin
     $display("Cache Bench!");
 end
 
-
+reg [1:0] test_enable = 1;
 
 always @(posedge clk) begin
 
-
+    if (test_enable) begin
 
     if (nops == 0) begin
-        address_in = 16384; // test, block offset = 0, set index = 0, tag is 4.
+        address_in = 4096; // test, block offset = 0, set index = 0, tag is 4.
+        write_enable_in = 1;
+        write_data_in = 8;
+        ENABLE = 1;
+    end
+
+    if (nops == 1) begin
+        address_in = 8192; // test, block offset = 0, set index = 0, tag is 4.
         write_enable_in = 1;
         write_data_in = 8;
         ENABLE = 1;
     end
 
 
-    if (nops == 1) begin
-        address_in = 4096; // test, block offset = 1, set index = 0, tag is 1.
-        write_enable_in = 1;
-        write_data_in = 3;
-        ENABLE = 1;
-    end
-    
-    
-    // testing the negedge status reads, 2 b2b reads
-
     if (nops == 2) begin
-        address_in = 16385; // test, block offset = 0, set index = 0, tag is 4.
-        write_enable_in = 0;
-        // write_data_in = 8;
+        address_in = 12288; // test, block offset = 0, set index = 0, tag is 4.
+        write_enable_in = 1;
+        write_data_in = 8;
         ENABLE = 1;
     end
+
+
+
 
 
     if (nops == 3) begin
         address_in = 16384; // test, block offset = 0, set index = 0, tag is 4.
-        write_enable_in = 0;
-        // write_data_in = 8;
-        ENABLE = 1;
-    end
-    
-
-
-    if (nops == 4) begin
-        address_in = 30000; // test, block offset = 0, set index = 0, tag is 4.
         write_enable_in = 1;
-        write_data_in = 1;
+        write_data_in = 8;
         ENABLE = 1;
     end
+
+    if (nops == 5) begin
+        address_in = 20480; // test, block offset = 0, set index = 0, tag is 4.
+        write_enable_in = 1;
+        write_data_in = 8;
+        ENABLE = 1;
+    end
+
+    // if (nops == 5) begin
+    //     address_in = 16384; // test, block offset = 0, set index = 0, tag is 4.
+    //     write_enable_in = 1;
+    //     write_data_in = 8;
+    //     ENABLE = 1;
+    // end
+    
+    // if (nops == 6) begin
+    //     address_in = 16384; // test, block offset = 0, set index = 0, tag is 4.
+    //     write_enable_in = 1;
+    //     write_data_in = 8;
+    //     ENABLE = 1;
+    // end
+
+    // if (nops == 7) begin
+    //     address_in = 16384; // test, block offset = 0, set index = 0, tag is 4.
+    //     write_enable_in = 1;
+    //     write_data_in = 8;
+    //     ENABLE = 1;
+    // end
+
+
+    // if (nops == 4) begin
+    //     address_in = 32768; // test, block offset = 0, set index = 0, tag is 4.
+    //     write_enable_in = 1;
+    //     write_data_in = 1;
+    //     ENABLE = 1;
+    // end
 
 
     if (nops == max_ops) begin
         ENABLE = 0;
-    end    
+        nops = -1;
+        test_enable = 0;
+    end else begin
 
-    nops = nops + 1;
+        nops = nops + 1;
+    end
+
+    end // test enable
 
 end
 

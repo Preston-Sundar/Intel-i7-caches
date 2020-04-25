@@ -165,7 +165,7 @@ module L1_D(
             
 
 
-        
+            
         end
 
 
@@ -174,6 +174,7 @@ module L1_D(
 
 
     always @(negedge clk) begin
+
 
         // once the issued set operation has been completed,
         // read its status and determine next cache operation.

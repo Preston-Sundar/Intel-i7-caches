@@ -87,7 +87,7 @@ reg [1:0] clockref_bits [7:0];
 
 // the index of the clr 
 integer clr_idx = 0;
-
+integer s;
 
 
 // 64 bytes of 8 blocks
@@ -103,14 +103,22 @@ integer c = 0;
     always @(posedge clk) begin
 
         tag_bits[0] = 1;
-        tag_bits[1] = 4;
-        tag_bits[2] = 17;
-        tag_bits[3] = 18;
+        tag_bits[1] = 2;
+        tag_bits[2] = 3;
+        tag_bits[3] = 4;
+        tag_bits[4] = 5;
+        tag_bits[5] = 6;
+        tag_bits[6] = 7;
+        tag_bits[7] = 8;
 
         valid_bits[0] = 1;
         valid_bits[1] = 1;
         valid_bits[2] = 1;
         valid_bits[3] = 1;
+        valid_bits[4] = 1;
+        valid_bits[5] = 1;
+        valid_bits[6] = 1;
+        valid_bits[7] = 1;
 
 
 
@@ -162,8 +170,8 @@ integer c = 0;
             // calculate the block num
             for (block_i = 0; block_i < 8; block_i = block_i + 1) begin
                 // if the bits are to be set to 0
-                $display("  %d == %d", tag, tag_bits[(set_idx * 8) + block_i]);
-                if (tag == tag_bits[(set_idx * 8) + block_i]) begin
+                $display("  %d == %d && valid %d", tag, tag_bits[(set_idx * 8) + block_i], valid_bits[(set_idx * 8) + block_i]);
+                if (tag == tag_bits[(set_idx * 8) + block_i] && (valid_bits[(set_idx * 8) + block_i] || write_enable)) begin
                     block_num = block_i;
                 end
             end
@@ -207,9 +215,9 @@ integer c = 0;
                     // set the clock reference bits since this block was used
                     clockref_bits[block_num] = 1;
 
-                    for (j = 511; j >= 0; j = j - 1) begin
-                         $write("%d", clockref_bits[j]);
-                    end
+                    // for (j = 511; j >= 0; j = j - 1) begin
+                    //      $write("%d", clockref_bits[j]);
+                    // end
 
                 end else if (write_enable == 0) begin
 
@@ -253,20 +261,45 @@ integer c = 0;
                     end
 
 
-                    // /all blocks are still valid, need to evict
+                    // all blocks are still valid, need to evict
                     if (force_block_num == -1) begin
 
-                        $display("force write");
+                        $display("Evicting");
+
+                        // find the first cleared bit in clockref_bits
+                        // for this set.
+                        for (block_i = 0; block_i < 8; block_i = block_i + 1) begin
+                             // if the bits are to be set to 0
+                            // $display("  %d == %d && valid %d", tag, tag_bits[(set_idx * 8) + block_i], valid_bits[(set_idx * 8) + block_i]);
+                            if ((clockref_bits[(set_idx * 8) + block_i]) == 0) begin
+                                block_num = block_i;
+                            end
+                        end
+
+                        // overwrite that data (need to recalculate everything...)
+
+                        // calc the start index
+                        start_idx = (512 - (2**data_size * 8) - (block_offset * 8));
+
+                        // set the data
+                        for (bit_n = 0; bit_n < 512; bit_n = bit_n + 1) begin
+                            // if the bits are to be set to 0
+                            bit_mask[bit_n] = 0;
+                        end
+
+
+                        // write the new stuff
+                        membank[block_num] = membank[block_num] & bit_mask;
+                        membank[block_num] = membank[block_num] | (write_data << start_idx);
+
+
+
+                        // set the clock reference bits since this block was used
+                        clockref_bits[block_num] = 1;
 
                     end
 
-
-                    
-
-
                 end
-
-
 
                 // indicate that the set is done
                 op_done = 1;
@@ -288,35 +321,39 @@ integer c = 0;
 
 
             // clear the current clock index bit
-            clockref_bits[clr_idx] = 0;
+            for (s = 0; s < 512; s = s + 8) begin
+                clockref_bits[s + clr_idx] = 0;
+            end
+            
+
+
 
             // move the clock index up by one
             clr_idx = clr_idx + 1;
             if (clr_idx == 8) begin
                 clr_idx = 0;
             end
-            
 
             $display("CACHE clr_idx: %d", clr_idx);
 
-            $display("      CACHE clock ref bits: ");
+            // $display("      CACHE clock ref bits: ");
 
             
-            for (j = 511; j >= 0; j = j - 1) begin
-                $write("%d", clockref_bits[0][j]);
-            end
-            $display("");
+            // for (j = 511; j >= 0; j = j - 1) begin
+            //     $write("%d", clockref_bits[0][j]);
+            // end
+            // $display("");
         
 
 
 
-            // // debug print
-            // for (i = 0; i < 8; i = i + 1) begin
-            //     for (j = 511; j >= 0; j = j - 1) begin
-            //         $write("%d", membank[i][j]);
-            //     end
-            //     $display("");
-            // end
+            // debug print
+            for (i = 0; i < 8; i = i + 1) begin
+                for (j = 511; j >= 0; j = j - 1) begin
+                    $write("%d", membank[i][j]);
+                end
+                $display("");
+            end
 
 
 
