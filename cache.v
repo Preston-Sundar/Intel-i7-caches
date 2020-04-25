@@ -108,6 +108,9 @@ module L1_D(
     // if set to 1, then force evict to write block
     reg [1:0] force_write = 0;
 
+    // set when set is done
+    reg [1:0] op_done = 0;
+
 
     // the control stuff
     always @(posedge clk) begin
@@ -135,7 +138,7 @@ module L1_D(
             if (data_in == 0) begin
 
                 $display("\nCACHE OPERATION (CPU) %d", nops);
-                $display("  add cpy: %b", address_cpy);
+                $display("  add cpy: %d, %b", address_cpy, address_cpy);
                 $display("  B offset: %b", block_offset);
                 $display("  S idx: %b", set_idx);
                 $display("  tag: %b", tag);
@@ -145,6 +148,7 @@ module L1_D(
                 // set set enable
                 set_enable = 1;
 
+                $display("");
 
 
 
@@ -158,12 +162,7 @@ module L1_D(
                 $display("  tag: %b", tag);
 
             end
-            // determine action??
-
-
-
-
-         
+            
 
 
         
@@ -173,9 +172,48 @@ module L1_D(
 
     end
 
+
+    always @(negedge clk) begin
+
+        // once the issued set operation has been completed,
+        // read its status and determine next cache operation.
+
+        // if the set has data after a read op
+        if (data_ready && ENABLE) begin
+
+            $display("CACHE READ DATA FOR OPERATION %d", nops);
+            $display("  data: %d", out_data);
+
+            
+
+
+            data_ready = 0;
+            out_data = 0;
+
+        end
+
+
+        // write miss on our databank
+        else if (set_miss_w && ENABLE) begin
+
+            $display("CACHE OPERATION %d, WRITE MISS", nops);
+
+            // write through the data to the lower component.
+            write_data_out = write_data_in;
+            address_out = address_in;
+            write_enable_out = write_enable_in;
+            write_size_out = write_size_in;
+
+            ENABLE = 0;
+
+        end
+
+
+    end
+
     
     Set s(clk, set_enable, write_enable_in, block_offset, set_idx, write_data_in, 
-    write_size_in, tag, nops, out_data, set_miss_w, set_miss_r, data_ready, force_write);
+    write_size_in, tag, nops, out_data, set_miss_w, set_miss_r, data_ready, force_write, op_done);
 
     // send stuff to that set
 

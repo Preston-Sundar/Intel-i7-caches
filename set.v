@@ -36,7 +36,10 @@ module Set(
     output reg [1:0] data_ready,
 
     // if set to 1, then force evict to write block
-    input reg [1:0] force_write
+    input reg [1:0] force_write,
+
+    // set when set is done
+    input reg [1:0] op_done
 
 );
 
@@ -57,6 +60,9 @@ integer end_idx; // the end of the bits to write.
 integer out_i;
 
 integer block_num = -1;
+integer force_block_num = -1;
+
+
 
 reg [511:0] bit_mask;
 
@@ -68,9 +74,23 @@ reg [511:0] bigbank [511:0];
 // our tag bits for all blocks
 reg [23:0] tag_bits [511:0];
 
+
+
 // gotta do this
 reg [1:0] valid_bits [511:0];
 
+
+
+// set a blocks's bit to 1 if it was
+// referenced, cache clears the bits later
+reg [1:0] clockref_bits [7:0];
+
+// the index of the clr 
+integer clr_idx = 0;
+
+
+
+// 64 bytes of 8 blocks
 reg [511:0] membank [7:0];
 
 // reg [7:0] test_b = 8;
@@ -82,12 +102,23 @@ integer c = 0;
 
     always @(posedge clk) begin
 
-        tag_bits[0] = 15;
-        tag_bits[1] = 16;
+        tag_bits[0] = 1;
+        tag_bits[1] = 4;
         tag_bits[2] = 17;
         tag_bits[3] = 18;
 
+        valid_bits[0] = 1;
+        valid_bits[1] = 1;
+        valid_bits[2] = 1;
+        valid_bits[3] = 1;
+
+
+
         if (enable) begin
+
+
+            // indicate that the set is not done
+            op_done = 0;
 
             $display("SET OPERATION %d", n_ops);
 
@@ -103,6 +134,7 @@ integer c = 0;
             // membank[0] = bigbank[set_idx * 8];
             // membank[1] = bigbank[(set_idx * 8) + 1];
 
+            // get the membank for this operation
             for (copy_idx = 0; copy_idx < 8; copy_idx = copy_idx + 1) begin
                 membank[copy_idx] = bigbank[(set_idx * 8) + copy_idx];
             end        
@@ -148,6 +180,9 @@ integer c = 0;
                     read_miss = 1;
                 end
 
+                // indicate that the set is done
+                op_done = 1;
+
             end else begin
                
                 
@@ -168,6 +203,14 @@ integer c = 0;
 
                     membank[block_num] = membank[block_num] & bit_mask;
                     membank[block_num] = membank[block_num] | (write_data << start_idx);
+
+                    // set the clock reference bits since this block was used
+                    clockref_bits[block_num] = 1;
+
+                    for (j = 511; j >= 0; j = j - 1) begin
+                         $write("%d", clockref_bits[j]);
+                    end
+
                 end else if (write_enable == 0) begin
 
                     $display("READ for operation %d", n_ops);
@@ -189,15 +232,44 @@ integer c = 0;
                     end
 
                     // set dat_ready to high, data can be read at neg edge
-                    data_ready = 1;                    
+                    data_ready = 1;
+
+                    // set the clock reference bits since this block was used
+                    clockref_bits[block_num] = 1;                    
 
                 // otherwise its a force write
+                // look for first empty spot, if not
+                // use clock algo to evict an existing block
                 end else if (force_write == 1) begin
                 
+
+
+                    // look for empty invalid block by searching valid bits
+                    for (block_i = 0; block_i < 8; block_i = block_i + 1) begin
+                        // if the blocks_i's valid bit is zero
+                        if (!valid_bits[(set_idx * 8) + block_i]) begin
+                            force_block_num = block_i;
+                        end
+                    end
+
+
+                    // /all blocks are still valid, need to evict
+                    if (force_block_num == -1) begin
+
+                        $display("force write");
+
+                    end
+
+
                     
 
 
                 end
+
+
+
+                // indicate that the set is done
+                op_done = 1;
 
 
             end
@@ -207,6 +279,7 @@ integer c = 0;
             // reset mask
             bit_mask = 0;
             block_num = -1;
+            force_block_num = -1;
 
             // write the membank back into the bigbank
             for (copy_idx = 0; copy_idx < 8; copy_idx = copy_idx + 1) begin
@@ -214,13 +287,39 @@ integer c = 0;
             end  
 
 
-            // debug print
-            for (i = 0; i < 8; i = i + 1) begin
-                for (j = 511; j >= 0; j = j - 1) begin
-                    $write("%d", membank[i][j]);
-                end
-                $display("");
+            // clear the current clock index bit
+            clockref_bits[clr_idx] = 0;
+
+            // move the clock index up by one
+            clr_idx = clr_idx + 1;
+            if (clr_idx == 8) begin
+                clr_idx = 0;
             end
+            
+
+            $display("CACHE clr_idx: %d", clr_idx);
+
+            $display("      CACHE clock ref bits: ");
+
+            
+            for (j = 511; j >= 0; j = j - 1) begin
+                $write("%d", clockref_bits[0][j]);
+            end
+            $display("");
+        
+
+
+
+            // // debug print
+            // for (i = 0; i < 8; i = i + 1) begin
+            //     for (j = 511; j >= 0; j = j - 1) begin
+            //         $write("%d", membank[i][j]);
+            //     end
+            //     $display("");
+            // end
+
+
+
 
         
         end

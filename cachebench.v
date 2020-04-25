@@ -11,7 +11,7 @@ module cachebench(
     // set to low if there was a local miss
     // and need to forward instruction to next cache.
     // lower component will set to high when its done.
-    reg [1:0] ENABLE = 1;
+    reg [1:0] ENABLE;
 
     // the write enable line
     reg [1:0] write_enable_in;
@@ -21,8 +21,7 @@ module cachebench(
 
     // the address to read/write to       <-- IDK
     // 24 tag, 6 for set index, 6 block offset
-    // setup an initial operation
-    reg [63:0] address_in = 19999;
+    reg [63:0] address_in;
 
     // specify the data write/read size
     reg [2:0] write_size_in;
@@ -55,7 +54,7 @@ module cachebench(
 
     // for debugging
     reg [31:0] nops = 0; 
-    reg [31:0] max_ops = 2; 
+    reg [31:0] max_ops = 6; 
 
 
 
@@ -69,17 +68,58 @@ end
 
 
 
-always @(negedge clk) begin
+always @(posedge clk) begin
+
+
+
+    if (nops == 0) begin
+        address_in = 16384; // test, block offset = 0, set index = 0, tag is 4.
+        write_enable_in = 1;
+        write_data_in = 8;
+        ENABLE = 1;
+    end
+
+
+    if (nops == 1) begin
+        address_in = 4096; // test, block offset = 1, set index = 0, tag is 1.
+        write_enable_in = 1;
+        write_data_in = 3;
+        ENABLE = 1;
+    end
+    
+    
+    // testing the negedge status reads, 2 b2b reads
+
+    if (nops == 2) begin
+        address_in = 16385; // test, block offset = 0, set index = 0, tag is 4.
+        write_enable_in = 0;
+        // write_data_in = 8;
+        ENABLE = 1;
+    end
+
+
+    if (nops == 3) begin
+        address_in = 16384; // test, block offset = 0, set index = 0, tag is 4.
+        write_enable_in = 0;
+        // write_data_in = 8;
+        ENABLE = 1;
+    end
     
 
-    nops = nops + 1;
 
-    address_in = 8;
+    if (nops == 4) begin
+        address_in = 30000; // test, block offset = 0, set index = 0, tag is 4.
+        write_enable_in = 1;
+        write_data_in = 1;
+        ENABLE = 1;
+    end
 
 
     if (nops == max_ops) begin
         ENABLE = 0;
     end    
+
+    nops = nops + 1;
 
 end
 
