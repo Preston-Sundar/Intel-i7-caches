@@ -54,7 +54,7 @@ module cachebench(
 
     // for debugging
     reg [31:0] nops = 0; 
-    reg [31:0] max_ops = 5; 
+    reg [31:0] max_ops = 9; 
 
 
 
@@ -96,8 +96,6 @@ always @(posedge clk) begin
 
 
 
-
-
     if (nops == 3) begin
         address_in = 16384; // test, block offset = 0, set index = 0, tag is 4.
         write_enable_in = 1;
@@ -105,41 +103,46 @@ always @(posedge clk) begin
         ENABLE = 1;
     end
 
-    if (nops == 5) begin
+    if (nops == 4) begin
         address_in = 20480; // test, block offset = 0, set index = 0, tag is 4.
         write_enable_in = 1;
         write_data_in = 8;
         ENABLE = 1;
     end
 
-    // if (nops == 5) begin
-    //     address_in = 16384; // test, block offset = 0, set index = 0, tag is 4.
-    //     write_enable_in = 1;
-    //     write_data_in = 8;
-    //     ENABLE = 1;
-    // end
+    if (nops == 5) begin
+        address_in = 24576; // test, block offset = 0, set index = 0, tag is 4.
+        write_enable_in = 1;
+        write_data_in = 8;
+        ENABLE = 1;
+    end
     
-    // if (nops == 6) begin
-    //     address_in = 16384; // test, block offset = 0, set index = 0, tag is 4.
-    //     write_enable_in = 1;
-    //     write_data_in = 8;
-    //     ENABLE = 1;
-    // end
+    if (nops == 6) begin
+        address_in = 28672; // test, block offset = 0, set index = 0, tag is 4.
+        write_enable_in = 1;
+        write_data_in = 8;
+        ENABLE = 1;
+    end
 
-    // if (nops == 7) begin
-    //     address_in = 16384; // test, block offset = 0, set index = 0, tag is 4.
-    //     write_enable_in = 1;
-    //     write_data_in = 8;
-    //     ENABLE = 1;
-    // end
+    if (nops == 7) begin
+        address_in = 32768; // test, block offset = 0, set index = 0, tag is 4.
+        write_enable_in = 1;
+        write_data_in = 8;
+        ENABLE = 1;
+    end
 
 
-    // if (nops == 4) begin
-    //     address_in = 32768; // test, block offset = 0, set index = 0, tag is 4.
-    //     write_enable_in = 1;
-    //     write_data_in = 1;
-    //     ENABLE = 1;
-    // end
+    if (nops == 8) begin
+        address_in = 32768; //.
+        write_enable_in = 1;
+        data_in = 1;
+        write_data_in = 8;
+        ENABLE = 1;
+    end
+
+    if (nops == 9) begin
+        ENABLE = 1;
+    end
 
 
     if (nops == max_ops) begin

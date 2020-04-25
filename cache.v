@@ -161,6 +161,13 @@ module L1_D(
                 $display("  S idx: %b", set_idx);
                 $display("  tag: %b", tag);
 
+
+                set_enable = 1;
+                force_write = 1;
+                write_data_in = data_in;
+
+                // clear the other set registers
+
             end
             
 
