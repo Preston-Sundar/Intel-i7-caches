@@ -12,7 +12,7 @@ Our L1 instruction and data caches had the following properties:
 
 ## Implementation
 
-We had two overarching strategies to go abotu implementing our L1 data and instruction caches. The first, which was initialy implemented and later scrapped, was to have one large central memory bank that the parent 'cache' module owned. It would then perform the tag matching and set index calculations, and pass a subset of the memory bank to the child 'set' module. The set module would then perform any reads or writes that were requested by the upper level component, which in the case of L1 was the CPU.
+We had two overarching strategies to go about implementing our L1 data and instruction caches. The first, which was initialy implemented and later scrapped, was to have one large central memory bank that the parent 'cache' module owned. It would then perform the tag matching and set index calculations, and pass a subset of the memory bank to the child 'set' module. The set module would then perform any reads or writes that were requested by the upper level component, which in the case of L1 was the CPU.
 
 This approach however was dropped in favour of one that would preserve the true functionality of the set, as we learned in class. Instead of tag matching outside the set module, our parent cache would only calculate the set index and pass that information to the set module. The main memory bank is now placed inside of the set module instead of being in the cache module. This made the code at the cache level very simple and also made unit testing the set module in isolation straighforward.
 
